@@ -1,0 +1,11 @@
+services:
+  lacarte-gateway-api:
+    build: .
+    container_name: lacarte-gateway-api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+
+volumes:
+  pgdata:
