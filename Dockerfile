@@ -1,24 +1,25 @@
 # ---------- build ----------
-FROM golang:1.26.5-bookworm AS builder
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS builder
 
-WORKDIR /app
+WORKDIR /src
 
-# Спочатку тільки залежності — шар кешується, поки go.mod/go.sum не змінились
-COPY src/go.* ./
-RUN go mod download
+# Спочатку тільки файли проєктів — шар кешується, поки вони не змінились
+COPY Gateway.slnx ./
+COPY src/Gateway/Gateway.csproj src/Gateway/
+RUN dotnet restore src/Gateway/Gateway.csproj
 
-COPY src/ ./
-
-# CGO_ENABLED=0 — статичний бінарник, не залежить від glibc
-RUN CGO_ENABLED=0 go build -v -ldflags="-s -w" -o server
+COPY src/ src/
+RUN dotnet publish src/Gateway/Gateway.csproj -c Release -o /app --no-restore
 
 # ---------- runtime ----------
-FROM gcr.io/distroless/static-debian12
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
-COPY --from=builder /app/server /app/server
+WORKDIR /app
+COPY --from=builder /app .
 
 EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
 
-USER nonroot:nonroot
+USER app
 
-ENTRYPOINT ["/app/server"]
+ENTRYPOINT ["dotnet", "Gateway.dll"]

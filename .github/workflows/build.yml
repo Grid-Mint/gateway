@@ -27,7 +27,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/grid-mint/gateway/api:latest
-            ghcr.io/grid-mint/gateway/api:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/grid-mint/users/api:latest
+            ghcr.io/grid-mint/users/api:${{ github.sha }}
+          cache-from: type=gha,scope=users-api
+          cache-to: type=gha,mode=max,scope=users-api
