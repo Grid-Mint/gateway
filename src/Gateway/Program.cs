@@ -1,26 +1,20 @@
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddHttpClient();
+
+builder.Host.UseSerilog(((context, configuration) => configuration
+        .WriteTo.Console()
+        .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
+        .ReadFrom.Configuration(context.Configuration)
+    ));
+
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
 
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
-
-app.MapGet("/users", async (IHttpClientFactory httpClientFactory) =>
-{
-    var baseUrl = builder.Configuration["Services:Users:BaseUrl"];
-
-    var client = httpClientFactory.CreateClient();
-    var result = await client.GetStringAsync(baseUrl + "/users");
-    return result;
-});
-
-app.MapGet("/user/{id}", async (IHttpClientFactory httpClientFactory, int id) =>
-{
-    var baseUrl = builder.Configuration["Services:Users:BaseUrl"];
-
-    var client = httpClientFactory.CreateClient();
-    var result = await client.GetStringAsync(baseUrl + "/user/" + id);
-    return result;
-});
+app.UseSerilogRequestLogging();
+app.MapReverseProxy();
 
 app.Run();
