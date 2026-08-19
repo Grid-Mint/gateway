@@ -1,11 +1,17 @@
 using Serilog.Events;
 using Serilog.Formatting;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace Gateway.Logs;
 
 public sealed class LokiJsonFormatter : ITextFormatter
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
     public void Format(LogEvent logEvent, TextWriter output)
     {
         var level = logEvent.Level switch
@@ -31,6 +37,6 @@ public sealed class LokiJsonFormatter : ITextFormatter
             payload["error"] = logEvent.Exception.ToString();
         }
 
-        output.WriteLine(JsonSerializer.Serialize(payload));
+        output.WriteLine(JsonSerializer.Serialize(payload, SerializerOptions));
     }
 }
