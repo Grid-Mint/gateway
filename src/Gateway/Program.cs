@@ -24,7 +24,10 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
+
 app.UseSerilogRequestLogging();
 app.MapReverseProxy();
+
+app.Logger.LogInformation("Gateway started");
 
 app.Run();
